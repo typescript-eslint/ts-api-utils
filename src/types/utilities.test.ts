@@ -45,6 +45,36 @@ describe("isPropertyReadonlyInType", () => {
 		).toBe(true);
 	});
 
+	it.each([
+		["Partial<Readonly<Box>>", true],
+		["Partial<Box>", false],
+	])(
+		"reads %s from its properties' check flags without a modifiers type",
+		(typeText, expected) => {
+			const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+				interface Box {
+					value: string;
+				}
+				type Test = ${typeText};
+			`);
+			const node = sourceFile.statements.at(-1) as ts.TypeAliasDeclaration;
+			const type = typeChecker.getTypeAtLocation(node);
+			type.getProperties();
+			Object.defineProperty(type, "modifiersType", {
+				value: undefined,
+				writable: true,
+			});
+
+			expect(
+				isPropertyReadonlyInType(
+					type,
+					ts.escapeLeadingUnderscores("value"),
+					typeChecker,
+				),
+			).toBe(expected);
+		},
+	);
+
 	it("does not crash when the type is a mapped type parameter extending any", () => {
 		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
 			type MyType<T> = {

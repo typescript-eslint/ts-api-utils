@@ -8,6 +8,7 @@ import {
 	isNodeFlagSet,
 	isObjectFlagSet,
 	isSymbolFlagSet,
+	isTransientSymbolLinksFlagSet,
 	isTypeFlagSet,
 } from "../flags";
 import {
@@ -326,6 +327,7 @@ function isReadonlyPropertyFromMappedType(
 	type: ts.Type,
 	name: ts.__String,
 	typeChecker: ts.TypeChecker,
+	prop: ts.Symbol,
 ): boolean | undefined {
 	if (!isObjectType(type) || !isObjectFlagSet(type, ts.ObjectFlags.Mapped)) {
 		return;
@@ -341,9 +343,20 @@ function isReadonlyPropertyFromMappedType(
 	}
 
 	const { modifiersType } = type as { modifiersType?: ts.Type };
+	if (modifiersType) {
+		return isPropertyReadonlyInType(modifiersType, name, typeChecker);
+	}
 
+	// Some API wrappers, such as typescript-eslint's TypeScript 7 backend, can't
+	// provide the modifiers type. The checker still flags mapped properties that
+	// inherit readonly from it.
 	return (
-		modifiersType && isPropertyReadonlyInType(modifiersType, name, typeChecker)
+		("links" in prop &&
+			isTransientSymbolLinksFlagSet(
+				(prop as ts.TransientSymbol).links,
+				ts.CheckFlags.Readonly,
+			)) ||
+		undefined
 	);
 }
 
@@ -368,7 +381,7 @@ function isReadonlyPropertyIntersection(
 			}
 
 			switch (
-				isReadonlyPropertyFromMappedType(constituent, name, typeChecker)
+				isReadonlyPropertyFromMappedType(constituent, name, typeChecker, prop)
 			) {
 				case false:
 					return false;
