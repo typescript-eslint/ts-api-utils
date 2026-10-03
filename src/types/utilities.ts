@@ -322,6 +322,27 @@ function isReadonlyAssignmentDeclaration(
 	return isFalseLiteralType(writableType);
 }
 
+function isReadonlyPropertyFromBaseType(
+	type: ts.Type,
+	name: ts.__String,
+	prop: ts.Symbol,
+	typeChecker: ts.TypeChecker,
+): boolean | undefined {
+	if (
+		!isObjectType(type) ||
+		!isObjectFlagSet(type, ts.ObjectFlags.ClassOrInterface)
+	) {
+		return;
+	}
+
+	// an inherited member is the base type's own symbol, so the base type decides whether it is readonly
+	const baseType = typeChecker
+		.getBaseTypes(type as ts.InterfaceType)
+		.find((base) => getPropertyOfType(base, name) === prop);
+
+	return baseType && isPropertyReadonlyInType(baseType, name, typeChecker);
+}
+
 function isReadonlyPropertyFromMappedType(
 	type: ts.Type,
 	name: ts.__String,
@@ -368,7 +389,8 @@ function isReadonlyPropertyIntersection(
 			}
 
 			switch (
-				isReadonlyPropertyFromMappedType(constituent, name, typeChecker)
+				isReadonlyPropertyFromMappedType(constituent, name, typeChecker) ??
+				isReadonlyPropertyFromBaseType(constituent, name, prop, typeChecker)
 			) {
 				case false:
 					return false;

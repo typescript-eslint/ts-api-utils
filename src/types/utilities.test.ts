@@ -45,6 +45,135 @@ describe("isPropertyReadonlyInType", () => {
 		).toBe(true);
 	});
 
+	it("returns true when the property is inherited from a readonly mapped type", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			interface Box {
+				value: string;
+			}
+			interface ReadonlyBox extends Readonly<Box> {}
+		`);
+		const node = sourceFile.statements[1] as ts.InterfaceDeclaration;
+		const type = typeChecker.getTypeAtLocation(node);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(true);
+	});
+
+	it("returns true when the property is inherited from a readonly mapped type of a mapped type", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			interface Box {
+				label: string;
+				value: string;
+			}
+			interface ValueBox extends Readonly<Pick<Box, "value">> {}
+		`);
+		const node = sourceFile.statements[1] as ts.InterfaceDeclaration;
+		const type = typeChecker.getTypeAtLocation(node);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(true);
+	});
+
+	it("returns true when the property is inherited through an interface that inherited it from a readonly mapped type", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			interface Box {
+				value: string;
+			}
+			interface ReadonlyBox extends Readonly<Box> {}
+			interface LabeledBox extends ReadonlyBox {
+				label: string;
+			}
+		`);
+		const node = sourceFile.statements[2] as ts.InterfaceDeclaration;
+		const type = typeChecker.getTypeAtLocation(node);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(true);
+	});
+
+	it("returns true when the property is inherited from the readonly mapped type among several base types", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			interface Box {
+				value: string;
+			}
+			interface Labeled {
+				label: string;
+			}
+			interface LabeledBox extends Labeled, Readonly<Box> {}
+		`);
+		const node = sourceFile.statements[2] as ts.InterfaceDeclaration;
+		const type = typeChecker.getTypeAtLocation(node);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(true);
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("label"),
+				typeChecker,
+			),
+		).toBe(false);
+	});
+
+	it("returns false when the property is inherited from a mapped type that removes readonly", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			interface Box {
+				readonly value: string;
+			}
+			type Writable<T> = { -readonly [K in keyof T]: T[K] };
+			interface WritableBox extends Writable<Box> {}
+		`);
+		const node = sourceFile.statements[2] as ts.InterfaceDeclaration;
+		const type = typeChecker.getTypeAtLocation(node);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(false);
+	});
+
+	it("returns false when the property is inherited from a mapped type that keeps it mutable", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			interface Box {
+				value: string;
+			}
+			interface PartialBox extends Partial<Box> {}
+		`);
+		const node = sourceFile.statements[1] as ts.InterfaceDeclaration;
+		const type = typeChecker.getTypeAtLocation(node);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(false);
+	});
+
 	it("does not crash when the type is a mapped type parameter extending any", () => {
 		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
 			type MyType<T> = {
