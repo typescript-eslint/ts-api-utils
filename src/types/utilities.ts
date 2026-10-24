@@ -8,6 +8,7 @@ import {
 	isNodeFlagSet,
 	isObjectFlagSet,
 	isSymbolFlagSet,
+	isTransientSymbolLinksFlagSet,
 	isTypeFlagSet,
 } from "../flags";
 import {
@@ -376,6 +377,16 @@ function isReadonlyPropertyIntersection(
 					return true;
 				default:
 				// `undefined` falls through
+			}
+
+			if (
+				(prop as ts.TransientSymbol).links &&
+				isTransientSymbolLinksFlagSet(
+					(prop as ts.TransientSymbol).links,
+					ts.CheckFlags.Readonly,
+				)
+			) {
+				return true;
 			}
 		}
 
