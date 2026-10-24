@@ -45,6 +45,25 @@ describe("isPropertyReadonlyInType", () => {
 		).toBe(true);
 	});
 
+	it("returns true when the property is from a spread object asserted as const", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			declare const base: { value: string };
+			const spread = { ...base } as const;
+		`);
+		const node = sourceFile.statements[1] as ts.VariableStatement;
+		const type = typeChecker.getTypeAtLocation(
+			node.declarationList.declarations[0],
+		);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(true);
+	});
+
 	it("does not crash when the type is a mapped type parameter extending any", () => {
 		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
 			type MyType<T> = {
