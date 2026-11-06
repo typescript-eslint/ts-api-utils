@@ -368,6 +368,16 @@ function isReadonlyPropertyIntersection(
 				return constituent.target.readonly;
 			}
 
+			if (
+				(prop as ts.TransientSymbol).links &&
+				isTransientSymbolLinksFlagSet(
+					(prop as ts.TransientSymbol).links,
+					ts.CheckFlags.Readonly,
+				)
+			) {
+				return true;
+			}
+
 			switch (
 				isReadonlyPropertyFromMappedType(constituent, name, typeChecker)
 			) {
@@ -377,16 +387,6 @@ function isReadonlyPropertyIntersection(
 					return true;
 				default:
 				// `undefined` falls through
-			}
-
-			if (
-				(prop as ts.TransientSymbol).links &&
-				isTransientSymbolLinksFlagSet(
-					(prop as ts.TransientSymbol).links,
-					ts.CheckFlags.Readonly,
-				)
-			) {
-				return true;
 			}
 		}
 

@@ -64,6 +64,31 @@ describe("isPropertyReadonlyInType", () => {
 		).toBe(true);
 	});
 
+	it.each([
+		["true", "readonly value", true],
+		["false", "value", false],
+	])(
+		"returns %s when the property is key-remapped from `%s`",
+		(_, source, expected) => {
+			const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+				type Renamed<T> = { [K in keyof T as \`x\${string & K}\`]: T[K] };
+				declare const renamed: Renamed<{ ${source}: string }>;
+			`);
+			const node = sourceFile.statements[1] as ts.VariableStatement;
+			const type = typeChecker.getTypeAtLocation(
+				node.declarationList.declarations[0],
+			);
+
+			expect(
+				isPropertyReadonlyInType(
+					type,
+					ts.escapeLeadingUnderscores("xvalue"),
+					typeChecker,
+				),
+			).toBe(expected);
+		},
+	);
+
 	it("does not crash when the type is a mapped type parameter extending any", () => {
 		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
 			type MyType<T> = {
