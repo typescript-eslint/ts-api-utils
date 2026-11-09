@@ -28,7 +28,7 @@ jobs:
         ts_version:
           - 5.5.4
           - 5.9.3
-          - latest
+          - 6.x
 
 name: Test
 
