@@ -1,6 +1,6 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-	exports: true,
+	exports: { legacy: true },
 	outDir: "lib",
 });
