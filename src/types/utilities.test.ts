@@ -71,7 +71,7 @@ describe("isPropertyReadonlyInType", () => {
 		"returns %s when the property is key-remapped from `%s`",
 		(_, source, expected) => {
 			const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
-				type Renamed<T> = { [K in keyof T as \`x\${string & K}\`]: T[K] };
+				type Renamed<T> = { [K in keyof T as \`renamed_\${string & K}\`]: T[K] };
 				declare const renamed: Renamed<{ ${source}: string }>;
 			`);
 			const node = sourceFile.statements[1] as ts.VariableStatement;
@@ -82,7 +82,7 @@ describe("isPropertyReadonlyInType", () => {
 			expect(
 				isPropertyReadonlyInType(
 					type,
-					ts.escapeLeadingUnderscores("xvalue"),
+					ts.escapeLeadingUnderscores("renamed_value"),
 					typeChecker,
 				),
 			).toBe(expected);
