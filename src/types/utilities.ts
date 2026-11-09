@@ -8,6 +8,7 @@ import {
 	isNodeFlagSet,
 	isObjectFlagSet,
 	isSymbolFlagSet,
+	isTransientSymbolLinksFlagSet,
 	isTypeFlagSet,
 } from "../flags";
 import {
@@ -365,6 +366,16 @@ function isReadonlyPropertyIntersection(
 				isTupleTypeReference(constituent)
 			) {
 				return constituent.target.readonly;
+			}
+
+			if (
+				(prop as ts.TransientSymbol).links &&
+				isTransientSymbolLinksFlagSet(
+					(prop as ts.TransientSymbol).links,
+					ts.CheckFlags.Readonly,
+				)
+			) {
+				return true;
 			}
 
 			switch (
