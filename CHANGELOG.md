@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.0.0-rc.2](https://github.com/typescript-eslint/ts-api-utils/compare/v3.0.0-rc.1...v3.0.0-rc.2) (2026-11-09)
+
+### Bug Fixes
+
+- keep legacy main and module fields in tsdown exports ([#1063](https://github.com/typescript-eslint/ts-api-utils/issues/1063)) ([0bf7724](https://github.com/typescript-eslint/ts-api-utils/commit/0bf77242f323a9f42cd17beac98da63ccdb4d1a7)), closes [#1064](https://github.com/typescript-eslint/ts-api-utils/issues/1064)
+- treat properties the checker flags readonly as readonly in isPropertyReadonlyInType ([#1059](https://github.com/typescript-eslint/ts-api-utils/issues/1059)) ([5a3b0c4](https://github.com/typescript-eslint/ts-api-utils/commit/5a3b0c4b687bf75f24a15e8be8f50d015ee5a7cf)), closes [#1058](https://github.com/typescript-eslint/ts-api-utils/issues/1058)
+
 # [3.0.0-rc.1](https://github.com/JoshuaKGoldberg/ts-api-utils/compare/v2.5.0...v3.0.0-rc.1) (2026-03-21)
 
 ### Features
