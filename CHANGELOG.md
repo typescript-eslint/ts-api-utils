@@ -1,6 +1,6 @@
 # Changelog
 
-# [3.0.0](https://github.com/typescript-eslint/ts-api-utils/compare/v3.0.0-rc.1...v3.0.0) (2026-11-09)
+# [3.0.0-rc.2](https://github.com/typescript-eslint/ts-api-utils/compare/v3.0.0-rc.1...v3.0.0-rc.2) (2026-11-09)
 
 ### Bug Fixes
 
