@@ -2,7 +2,7 @@ description: Prepares the repo for a typical CI job
 
 inputs:
   node-version:
-    default: latest
+    default: lts/*
     description: The node version to use
     required: false
 

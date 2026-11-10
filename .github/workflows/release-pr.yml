@@ -65,6 +65,7 @@ on:
   push:
     branches:
       - main
+      - v2
 
 permissions:
   contents: write

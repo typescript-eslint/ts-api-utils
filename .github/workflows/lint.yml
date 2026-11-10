@@ -14,3 +14,4 @@ on:
   push:
     branches:
       - main
+      - v2

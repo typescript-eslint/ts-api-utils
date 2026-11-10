@@ -29,28 +29,22 @@ jobs:
         name: Build
         run: pnpm run build
 
+      # 2.x only takes the latest dist-tag (and GitHub's Latest badge) while npm's latest is still 2.x
+      - id: dist_tag
+        if: steps.release_version.outputs.release_version != ''
+        name: Choose npm dist-tag
+        run: |
+          if npm view ts-api-utils@latest version | grep -q '^2\.'; then
+            echo "args=" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=--npm.tag=latest-v2 --github.makeLatest=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - env:
           GITHUB_TOKEN: ${{ github.token }}
         if: steps.release_version.outputs.release_version != ''
         name: Release
-        run: pnpm dlx release-it --npm.allowSameVersion -i ${{ steps.release_version.outputs.release_version }}
-
-      - if: steps.release_version.outputs.release_version != ''
-        name: Generate Docs
-        run: pnpm run docs
-
-      - if: steps.release_version.outputs.release_version != ''
-        name: Create a pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./docs/generated
-
-      - id: deployment
-        if: steps.release_version.outputs.release_version != ''
-        name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
-        with:
-          token: ${{ github.token }}
+        run: pnpm dlx release-it --npm.allowSameVersion -i ${{ steps.release_version.outputs.release_version }} ${{ steps.dist_tag.outputs.args }}
 
 name: Release
 
@@ -58,6 +52,7 @@ on:
   push:
     branches:
       - main
+      - v2
 
 permissions:
   contents: write
