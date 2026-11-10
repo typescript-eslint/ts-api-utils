@@ -8,6 +8,7 @@ import {
 	isNodeFlagSet,
 	isObjectFlagSet,
 	isSymbolFlagSet,
+	isTransientSymbolLinksFlagSet,
 	isTypeFlagSet,
 } from "../flags";
 import {
@@ -433,6 +434,17 @@ function isReadonlyPropertyIntersection(
 				isTupleTypeReference(constituent)
 			) {
 				return constituent.target.readonly;
+			}
+
+			if (
+				isTransientSymbolLinksFlagSet(
+					// TypeScript <5.0 stores checkFlags on the symbol itself
+					(prop as Partial<ts.TransientSymbol>).links ??
+						(prop as unknown as ts.TransientSymbolLinks),
+					ts.CheckFlags.Readonly,
+				)
+			) {
+				return true;
 			}
 
 			switch (

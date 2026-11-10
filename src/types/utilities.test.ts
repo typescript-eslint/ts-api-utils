@@ -47,6 +47,50 @@ describe("isPropertyReadonlyInType", () => {
 		).toBe(true);
 	});
 
+	it("returns true when the property is from a spread object asserted as const", () => {
+		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+			declare const base: { value: string };
+			const spread = { ...base } as const;
+		`);
+		const node = sourceFile.statements[1] as ts.VariableStatement;
+		const type = typeChecker.getTypeAtLocation(
+			node.declarationList.declarations[0],
+		);
+
+		expect(
+			isPropertyReadonlyInType(
+				type,
+				ts.escapeLeadingUnderscores("value"),
+				typeChecker,
+			),
+		).toBe(true);
+	});
+
+	it.each([
+		["true", "readonly value", true],
+		["false", "value", false],
+	])(
+		"returns %s when the property is key-remapped from `%s`",
+		(_, source, expected) => {
+			const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
+				type Renamed<T> = { [K in keyof T as \`renamed_\${string & K}\`]: T[K] };
+				declare const renamed: Renamed<{ ${source}: string }>;
+			`);
+			const node = sourceFile.statements[1] as ts.VariableStatement;
+			const type = typeChecker.getTypeAtLocation(
+				node.declarationList.declarations[0],
+			);
+
+			expect(
+				isPropertyReadonlyInType(
+					type,
+					ts.escapeLeadingUnderscores("renamed_value"),
+					typeChecker,
+				),
+			).toBe(expected);
+		},
+	);
+
 	it("does not crash when the type is a mapped type parameter extending any", () => {
 		const { sourceFile, typeChecker } = createSourceFileAndTypeChecker(`
 			type MyType<T> = {
