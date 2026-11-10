@@ -17,6 +17,7 @@ on:
   pull_request:
     branches:
       - main
+      - v2
     types:
       - edited
       - opened
