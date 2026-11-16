@@ -521,4 +521,161 @@ describe("collectVariableUsage", () => {
 			]),
 		);
 	});
+
+	test("type-only import specifiers", () => {
+		const sourceFile = createSourceFile(`
+			import { type TypeOnly, Value } from "./mod";
+			import type { ClauseTypeOnly } from "./mod";
+
+			type T = TypeOnly;
+			type C = ClauseTypeOnly;
+			const v = Value;
+		`);
+
+		const [typeOnlyDeclaration] = query<ts.Identifier>(
+			sourceFile,
+			"ImportSpecifier > Identifier[name='TypeOnly']",
+		);
+		const [valueDeclaration] = query<ts.Identifier>(
+			sourceFile,
+			"ImportSpecifier > Identifier[name='Value']",
+		);
+		const [clauseTypeDeclaration] = query<ts.Identifier>(
+			sourceFile,
+			"ImportSpecifier > Identifier[name='ClauseTypeOnly']",
+		);
+
+		const [typeOnlyUse] = query<ts.Identifier>(
+			sourceFile,
+			"TypeAliasDeclaration:has(Identifier[name='T']) TypeReference Identifier[name='TypeOnly']",
+		);
+		const [clauseTypeUse] = query<ts.Identifier>(
+			sourceFile,
+			"TypeAliasDeclaration:has(Identifier[name='C']) TypeReference Identifier[name='ClauseTypeOnly']",
+		);
+		const [valueUse] = query<ts.Identifier>(
+			sourceFile,
+			"VariableDeclaration:has(Identifier[name='v']) Identifier[name='Value']",
+		);
+
+		const actual = collectVariableUsage(sourceFile);
+
+		expect(actual.get(typeOnlyDeclaration)).toEqual({
+			declarations: [typeOnlyDeclaration],
+			domain: DeclarationDomain.Type | DeclarationDomain.Import,
+			exported: false,
+			inGlobalScope: false,
+			uses: [
+				{
+					domain: UsageDomain.Type,
+					location: typeOnlyUse,
+				},
+			],
+		});
+
+		expect(actual.get(clauseTypeDeclaration)).toEqual({
+			declarations: [clauseTypeDeclaration],
+			domain: DeclarationDomain.Type | DeclarationDomain.Import,
+			exported: false,
+			inGlobalScope: false,
+			uses: [
+				{
+					domain: UsageDomain.Type,
+					location: clauseTypeUse,
+				},
+			],
+		});
+
+		expect(actual.get(valueDeclaration)).toEqual({
+			declarations: [valueDeclaration],
+			domain: DeclarationDomain.Any | DeclarationDomain.Import,
+			exported: false,
+			inGlobalScope: false,
+			uses: [
+				{
+					domain: UsageDomain.ValueOrNamespace,
+					location: valueUse,
+				},
+			],
+		});
+	});
+
+	test("type-only default and import equals declarations", () => {
+		const sourceFile = createSourceFile(`
+			import type DefaultType from "./mod";
+			import type TypeEquals = require("./mod");
+
+			type D = DefaultType;
+			type E = TypeEquals;
+		`);
+
+		const [defaultTypeDeclaration] = query<ts.Identifier>(
+			sourceFile,
+			"ImportClause > Identifier[name='DefaultType']",
+		);
+		const [typeEqualsDeclaration] = query<ts.Identifier>(
+			sourceFile,
+			"ImportEqualsDeclaration > Identifier[name='TypeEquals']",
+		);
+
+		const [defaultTypeUse] = query<ts.Identifier>(
+			sourceFile,
+			"TypeAliasDeclaration:has(Identifier[name='D']) TypeReference Identifier[name='DefaultType']",
+		);
+		const [typeEqualsUse] = query<ts.Identifier>(
+			sourceFile,
+			"TypeAliasDeclaration:has(Identifier[name='E']) TypeReference Identifier[name='TypeEquals']",
+		);
+
+		const actual = collectVariableUsage(sourceFile);
+
+		expect(actual.get(defaultTypeDeclaration)).toEqual({
+			declarations: [defaultTypeDeclaration],
+			domain: DeclarationDomain.Type | DeclarationDomain.Import,
+			exported: false,
+			inGlobalScope: false,
+			uses: [
+				{
+					domain: UsageDomain.Type,
+					location: defaultTypeUse,
+				},
+			],
+		});
+
+		expect(actual.get(typeEqualsDeclaration)).toEqual({
+			declarations: [typeEqualsDeclaration],
+			domain: DeclarationDomain.Type | DeclarationDomain.Import,
+			exported: false,
+			inGlobalScope: false,
+			uses: [
+				{
+					domain: UsageDomain.Type,
+					location: typeEqualsUse,
+				},
+			],
+		});
+	});
+
+	test("type-only import does not match value usage", () => {
+		const sourceFile = createSourceFile(`
+			import type { Foo } from "./mod";
+
+			const x = Foo;
+		`);
+
+		const [fooDeclaration] = query<ts.Identifier>(
+			sourceFile,
+			"ImportSpecifier > Identifier[name='Foo']",
+		);
+
+		const actual = collectVariableUsage(sourceFile);
+
+		expect(actual.get(fooDeclaration)).toEqual({
+			declarations: [fooDeclaration],
+			domain: DeclarationDomain.Type | DeclarationDomain.Import,
+			exported: false,
+			inGlobalScope: false,
+			uses: [],
+		});
+	});
 });
