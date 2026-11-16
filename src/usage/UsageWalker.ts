@@ -6,7 +6,7 @@ import * as ts from "typescript";
 import type { UsageInfo, UsageInfoCallback } from "./usage";
 
 import { includesModifier } from "../modifiers";
-import { DeclarationDomain } from "./declarations";
+import { DeclarationDomain, getDeclarationDomain } from "./declarations";
 import { getPropertyName } from "./getPropertyName";
 import { getUsageDomain } from "./getUsageDomain";
 import {
@@ -155,13 +155,18 @@ export class UsageWalker {
 				case ts.SyntaxKind.ImportClause:
 				case ts.SyntaxKind.ImportEqualsDeclaration:
 				case ts.SyntaxKind.ImportSpecifier:
-				case ts.SyntaxKind.NamespaceImport:
+				case ts.SyntaxKind.NamespaceImport: {
+					const name = (node as ts.NamedDeclaration).name;
 					this.#handleDeclaration(
 						node as ts.NamedDeclaration,
 						false,
-						DeclarationDomain.Any | DeclarationDomain.Import,
+						name !== undefined && ts.isIdentifier(name)
+							? (getDeclarationDomain(name) ??
+									DeclarationDomain.Any | DeclarationDomain.Import)
+							: DeclarationDomain.Any | DeclarationDomain.Import,
 					);
 					break;
+				}
 				case ts.SyntaxKind.InterfaceDeclaration:
 				case ts.SyntaxKind.TypeAliasDeclaration:
 					this.#handleDeclaration(

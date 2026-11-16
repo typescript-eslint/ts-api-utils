@@ -39,13 +39,25 @@ export function getDeclarationDomain(
 		case ts.SyntaxKind.FunctionExpression:
 			return DeclarationDomain.Value;
 		case ts.SyntaxKind.ImportClause:
-		case ts.SyntaxKind.NamespaceImport:
-			return DeclarationDomain.Any | DeclarationDomain.Import; // TODO handle type-only imports
+			return (node.parent as ts.ImportClause).name === node
+				? isImportClauseTypeOnly(node.parent as ts.ImportClause)
+					? DeclarationDomain.Type | DeclarationDomain.Import
+					: DeclarationDomain.Any | DeclarationDomain.Import
+				: undefined;
 		case ts.SyntaxKind.ImportEqualsDeclaration:
+			return (node.parent as ts.ImportEqualsDeclaration).name === node
+				? (node.parent as ts.ImportEqualsDeclaration).isTypeOnly
+					? DeclarationDomain.Type | DeclarationDomain.Import
+					: DeclarationDomain.Any | DeclarationDomain.Import
+				: undefined;
 		case ts.SyntaxKind.ImportSpecifier:
-			return (node.parent as ts.ImportEqualsDeclaration | ts.ImportSpecifier)
-				.name === node
-				? DeclarationDomain.Any | DeclarationDomain.Import // TODO handle type-only imports
+			return (node.parent as ts.ImportSpecifier).name === node
+				? (node.parent as ts.ImportSpecifier).isTypeOnly ||
+					isImportClauseTypeOnly(
+						(node.parent as ts.ImportSpecifier).parent.parent,
+					)
+					? DeclarationDomain.Type | DeclarationDomain.Import
+					: DeclarationDomain.Any | DeclarationDomain.Import
 				: undefined;
 		case ts.SyntaxKind.InterfaceDeclaration:
 		case ts.SyntaxKind.TypeAliasDeclaration:
@@ -54,6 +66,12 @@ export function getDeclarationDomain(
 
 		case ts.SyntaxKind.ModuleDeclaration:
 			return DeclarationDomain.Namespace;
+		case ts.SyntaxKind.NamespaceImport:
+			return (node.parent as ts.NamespaceImport).name === node
+				? isImportClauseTypeOnly((node.parent as ts.NamespaceImport).parent)
+					? DeclarationDomain.Type | DeclarationDomain.Import
+					: DeclarationDomain.Any | DeclarationDomain.Import
+				: undefined;
 		case ts.SyntaxKind.Parameter:
 			if (
 				node.parent.parent.kind === ts.SyntaxKind.IndexSignature ||
@@ -68,4 +86,12 @@ export function getDeclarationDomain(
 				? DeclarationDomain.Value
 				: undefined;
 	}
+}
+
+function isImportClauseTypeOnly(node: ts.ImportClause): boolean {
+	return (
+		node.phaseModifier === ts.SyntaxKind.TypeKeyword ||
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
+		node.isTypeOnly
+	);
 }
