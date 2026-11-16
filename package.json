@@ -4,7 +4,7 @@
 	"description": "Utility functions for working with TypeScript's API. Successor to the wonderful tsutils. 🛠️️",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/JoshuaKGoldberg/ts-api-utils"
+		"url": "https://github.com/typescript-eslint/ts-api-utils"
 	},
 	"license": "MIT",
 	"author": {
